@@ -32,7 +32,7 @@ def main():
     #                        min_cost, min_delay, config['output_file'])
     
     plot_cumulative_distributions(cumulative_cost_matrix, cumulative_delay_matrix, config['cost_bin_size'], 
-                                  config['delay_bin_size'], min_cost, min_delay)
+                                  config['delay_bin_size'], min_cost, min_delay, save_path='png/', create_grayscale=True, dpi=300)
 
     # Analyze a single iteration
     #analyze_single_iteration(risks, iteration_number=1)

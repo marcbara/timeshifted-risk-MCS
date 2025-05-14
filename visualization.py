@@ -80,14 +80,16 @@ def plot_p90_over_time(p90_values: np.ndarray, title: str, ylabel: str, save_pat
 
 def plot_heatmap(matrix: np.ndarray, title: str, xlabel: str, ylabel: str, cbar_label: str, 
                  xticks: np.ndarray, yticks: np.ndarray, steady_state: int, save_path: str, 
-                 cmap: str, grayscale: bool = False, dpi: int = 300):
+                 cmap: str, grayscale: bool = False, dpi: int = 300, invert_grayscale: bool = False):
     """Plot a heatmap with customizable labels and steady state line."""
     apply_pmj_settings()
     plt.figure(figsize=(12, 6), dpi=dpi)
     
     # Set grayscale styling if needed
     if grayscale:
-        used_cmap = 'gray'
+        # Choose grayscale colormap based on whether we need to invert it
+        # For probability plots: low values (0) should be white, high values (1) should be black
+        used_cmap = 'gray' if not invert_grayscale else 'gray_r'
         line_color = 'black'
         text_color = 'black'
         file_suffix = "_grayscale"
@@ -109,8 +111,15 @@ def plot_heatmap(matrix: np.ndarray, title: str, xlabel: str, ylabel: str, cbar_
     
     if steady_state > 0:
         plt.axhline(y=steady_state, color=line_color, linestyle='--', linewidth=1.5)
-        plt.text(0, steady_state, f'Steady State (Day {steady_state})', 
-                 color=text_color, va='bottom', ha='left', fontsize=9, fontweight='bold')
+        # Adjust position for better readability in grayscale
+        if grayscale:
+            bg_box = dict(boxstyle="round,pad=0.3", fc="white", ec="black", alpha=0.8)
+            plt.text(0, steady_state + 2, f'Steady State (Day {steady_state})', 
+                    color=text_color, va='bottom', ha='left', fontsize=9, fontweight='bold',
+                    bbox=bg_box)
+        else:
+            plt.text(0, steady_state, f'Steady State (Day {steady_state})', 
+                    color=text_color, va='bottom', ha='left', fontsize=9, fontweight='bold')
     
     plt.tight_layout()
     
@@ -242,21 +251,23 @@ def plot_cumulative_distributions(cost_matrix: np.ndarray, delay_matrix: np.ndar
         plot_p90_over_time(delay_p90, "P90 Delay Values Over Project Days", "P90 Delay Value", 
                           f'{save_path}p90_delay_over_project_days.png', True, dpi)
         
-        # Scaled distribution heatmaps - grayscale
+        # Scaled distribution heatmaps - grayscale with INVERTED mapping (high values = black)
+        # This is what you requested - for these plots, 0 should be white and 1 should be black
         plot_heatmap(cost_matrix_scaled, "Scaled Cumulative Cost Distribution Over Time", "Cumulative Cost", 
                     "Project Day", "Scaled Frequency", cost_xticks, days_yticks, cost_steady_state, 
-                    f'{save_path}scaled_cumulative_cost_distribution.png', heatmap_cmap, True, dpi)
+                    f'{save_path}scaled_cumulative_cost_distribution.png', heatmap_cmap, True, dpi, True)
         plot_heatmap(delay_matrix_scaled, "Scaled Cumulative Delay Distribution Over Time", "Cumulative Delay", 
                     "Project Day", "Scaled Frequency", delay_xticks, days_yticks, delay_steady_state, 
-                    f'{save_path}scaled_cumulative_delay_distribution.png', heatmap_cmap, True, dpi)
+                    f'{save_path}scaled_cumulative_delay_distribution.png', heatmap_cmap, True, dpi, True)
         
-        # Cumulative probability heatmaps - grayscale
+        # Cumulative probability heatmaps - grayscale with INVERTED mapping (high values = black)
+        # This is what you requested - for probability plots, 0 should be white and 1 should be black
         plot_heatmap(cumulative_cost_probabilities, "Cumulative Cost Probability Distribution Over Time", "Cumulative Cost", 
                     "Project Day", "Cumulative Probability", cost_xticks, days_yticks, 0, 
-                    f'{save_path}cumulative_cost_probability_distribution.png', heatmap_cmap, True, dpi)
+                    f'{save_path}cumulative_cost_probability_distribution.png', heatmap_cmap, True, dpi, True)
         plot_heatmap(cumulative_delay_probabilities, "Cumulative Delay Probability Distribution Over Time", "Cumulative Delay", 
                     "Project Day", "Cumulative Probability", delay_xticks, days_yticks, 0, 
-                    f'{save_path}cumulative_delay_probability_distribution.png', heatmap_cmap, True, dpi)
+                    f'{save_path}cumulative_delay_probability_distribution.png', heatmap_cmap, True, dpi, True)
         
         # Final distribution histograms - grayscale
         plot_final_distribution(cost_labels, cost_matrix[-1, :], "Final Cumulative Cost Distribution", "Cost", 
@@ -268,4 +279,4 @@ def plot_cumulative_distributions(cost_matrix: np.ndarray, delay_matrix: np.ndar
     print(f"Delay distribution reaches steady state at day: {delay_steady_state}")
     print(f"Generated all visualizations with {dpi} DPI resolution")
     if create_grayscale:
-        print(f"Grayscale versions created for PMJ submission")
+        print(f"Grayscale versions created for PMJ submission with correct probability mapping (0=white, 1=black)")
