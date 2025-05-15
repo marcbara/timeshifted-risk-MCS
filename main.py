@@ -1,4 +1,5 @@
-from monte_carlo import run_monte_carlo_simulation, analyze_single_iteration
+#from monte_carlo import run_monte_carlo_simulation, analyze_single_iteration
+from monte_carlo_bootstrap import run_monte_carlo_simulation_bootstrap  # Changed from original monte_carlo import
 from risk_data import read_and_validate_data
 from visualization import plot_cumulative_distributions
 from excel_output import save_matrices_to_excel
@@ -24,12 +25,12 @@ def main():
 
     # Run the full Monte Carlo simulation
     print(f"\nTotal Iterations: {config['num_iterations']}")
-    cumulative_cost_matrix, cumulative_delay_matrix, min_cost, min_delay = run_monte_carlo_simulation(risks, **simulation_params)
+    cumulative_cost_matrix, cumulative_delay_matrix, min_cost, min_delay = run_monte_carlo_simulation_bootstrap(risks, **simulation_params)
 
 
     # Save results and create visualizations
-    # save_matrices_to_excel(cumulative_cost_matrix, cumulative_delay_matrix, config['cost_bin_size'], config['delay_bin_size'], 
-    #                        min_cost, min_delay, config['output_file'])
+    save_matrices_to_excel(cumulative_cost_matrix, cumulative_delay_matrix, config['cost_bin_size'], config['delay_bin_size'], 
+                            min_cost, min_delay, config['output_file'])
     
     plot_cumulative_distributions(cumulative_cost_matrix, cumulative_delay_matrix, config['cost_bin_size'], 
                                   config['delay_bin_size'], min_cost, min_delay, save_path='png/', create_grayscale=True, dpi=300)

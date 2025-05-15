@@ -62,9 +62,10 @@ def plot_p90_over_time(p90_values: np.ndarray, title: str, ylabel: str, save_pat
     else:
         line_color = 'blue'
         file_suffix = ""
+    
         
     plt.plot(np.arange(1, len(p90_values) + 1), p90_values, color=line_color, 
-             linestyle='-', linewidth=1.5, label=f'P90 {ylabel}')
+             linestyle='-', linewidth=1.5, label=f'{ylabel}')
     plt.title(title)
     plt.xlabel("Project Day")
     plt.ylabel(ylabel)
@@ -72,6 +73,8 @@ def plot_p90_over_time(p90_values: np.ndarray, title: str, ylabel: str, save_pat
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
     
+    print(f"Last day: {ylabel} = {p90_values[-1]}")
+
     # Save both versions if grayscale requested
     base, ext = os.path.splitext(save_path)
     output_path = f"{base}{file_suffix}{ext}"
