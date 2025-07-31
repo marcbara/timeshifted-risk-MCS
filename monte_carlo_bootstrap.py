@@ -265,6 +265,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title("Bootstrap Analysis of P90 Cost Values")
     plt.xlabel("Project Day")
     plt.ylabel("P90 Cost Value")
+    # Format y-axis with comma thousands separators
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -290,6 +293,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title("Bootstrap Analysis of P90 Cost Values")
     plt.xlabel("Project Day")
     plt.ylabel("P90 Cost Value")
+    # Format y-axis with comma thousands separators
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -373,6 +379,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title("All Bootstrap P90 Cost Curves")
     plt.xlabel("Project Day")
     plt.ylabel("P90 Cost Value")
+    # Format y-axis with comma thousands separators
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -398,6 +407,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title("All Bootstrap P90 Cost Curves")
     plt.xlabel("Project Day")
     plt.ylabel("P90 Cost Value")
+    # Format y-axis with comma thousands separators
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -467,7 +479,7 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     print(f"P90 Delay at end (median): {delay_p90_median[-1]:.2f}")
     print(f"P90 Delay 95% CI: [{delay_p90_lower[-1]:.2f}, {delay_p90_upper[-1]:.2f}]")
     print(f"Generated all bootstrap visualizations with {bootstrap_dpi} DPI resolution")
-    print(f"Grayscale versions created for PMJ submission")
+    print(f"Grayscale versions created for journal submission")
     
     # Calculate CI half-widths as percentage of median - with safe division
     # Create mask for non-zero median values
@@ -595,6 +607,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title('Convergence Analysis: Maximum Change in P90 Cost')
     plt.xlabel('Iterations')
     plt.ylabel('Δ∞ (% of baseline P90)')
+    # Format x-axis with comma thousands separators
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -614,6 +629,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title('Convergence Analysis: Maximum Change in P90 Cost')
     plt.xlabel('Iterations')
     plt.ylabel('Δ∞ (% of baseline P90)')
+    # Format x-axis with comma thousands separators
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -633,6 +651,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title('Convergence Analysis: Maximum Change in P90 Delay')
     plt.xlabel('Iterations')
     plt.ylabel('Δ∞ (% of baseline P90)')
+    # Format x-axis with comma thousands separators
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -652,6 +673,9 @@ def run_monte_carlo_simulation_bootstrap(risks: List[Dict], num_iterations: int,
     plt.title('Convergence Analysis: Maximum Change in P90 Delay')
     plt.xlabel('Iterations')
     plt.ylabel('Δ∞ (% of baseline P90)')
+    # Format x-axis with comma thousands separators
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()

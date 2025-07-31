@@ -41,6 +41,46 @@ def compute_p90(cumulative_probabilities: np.ndarray, bin_labels: np.ndarray) ->
             p90_values.append(0)
     return np.array(p90_values)
 
+def compute_percentiles(frequencies: np.ndarray, bin_labels: np.ndarray, percentiles: list = [50, 75, 90, 95, 99], interpolate: bool = True) -> dict:
+    """Compute specified percentiles from frequency distribution data."""
+    # Create cumulative distribution
+    cumulative_freq = np.cumsum(frequencies)
+    total_freq = cumulative_freq[-1]
+    
+    if total_freq == 0:
+        return {p: 0 for p in percentiles}
+    
+    # Convert to cumulative probabilities
+    cumulative_prob = cumulative_freq / total_freq
+    
+    percentile_values = {}
+    for p in percentiles:
+        threshold = p / 100.0
+        
+        if interpolate:
+            # Linear interpolation between bins for more precise percentiles
+            if threshold <= cumulative_prob[0]:
+                percentile_values[p] = bin_labels[0]
+            elif threshold >= cumulative_prob[-1]:
+                percentile_values[p] = bin_labels[-1]
+            else:
+                # Find the two bins that bracket the threshold
+                idx_upper = np.argmax(cumulative_prob >= threshold)
+                idx_lower = max(0, idx_upper - 1)
+                
+                if idx_upper == idx_lower or cumulative_prob[idx_upper] == cumulative_prob[idx_lower]:
+                    percentile_values[p] = bin_labels[idx_upper]
+                else:
+                    # Linear interpolation
+                    weight = (threshold - cumulative_prob[idx_lower]) / (cumulative_prob[idx_upper] - cumulative_prob[idx_lower])
+                    percentile_values[p] = bin_labels[idx_lower] + weight * (bin_labels[idx_upper] - bin_labels[idx_lower])
+        else:
+            # Original method - return bin boundary
+            idx = np.argmax(cumulative_prob >= threshold)
+            percentile_values[p] = bin_labels[idx]
+    
+    return percentile_values
+
 def detect_steady_state(matrix: np.ndarray, threshold: float = 1) -> int:
     """Detect the steady state in a matrix."""
     last_row = matrix[-1]
@@ -71,6 +111,11 @@ def plot_p90_over_time(p90_values: np.ndarray, title: str, ylabel: str, save_pat
     plt.ylabel(ylabel)
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
+    
+    # Format y-axis with comma thousands separators for cost plots
+    if "Cost" in ylabel:
+        ax = plt.gca()
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.tight_layout()
     
     print(f"Last day: {ylabel} = {p90_values[-1]}")
@@ -133,8 +178,9 @@ def plot_heatmap(matrix: np.ndarray, title: str, xlabel: str, ylabel: str, cbar_
     plt.close()
 
 def plot_final_distribution(labels: np.ndarray, values: np.ndarray, title: str, xlabel: str, 
-                           bin_size: int, save_path: str, grayscale: bool = False, dpi: int = 300):
-    """Plot the final distribution as a bar chart."""
+                           bin_size: int, save_path: str, grayscale: bool = False, dpi: int = 300, 
+                           print_percentiles: bool = False):
+    """Plot the final distribution as a bar chart with percentile calculations."""
     apply_pmj_settings()
     plt.figure(figsize=(12, 6), dpi=dpi)
     
@@ -150,12 +196,25 @@ def plot_final_distribution(labels: np.ndarray, values: np.ndarray, title: str, 
     
     plt.bar(labels, values, width=bin_size * 1.0, align='center', 
             alpha=0.8, color=bar_color, edgecolor=edge_color)
+    
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel("Cumulative Frequency")
     plt.grid(True, linestyle='--', alpha=0.5, axis='y')
+    
+    # Format x-axis with comma thousands separators
+    ax = plt.gca()
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
     plt.xticks(rotation=45)
     plt.tight_layout()
+    
+    # Print percentiles to console only once (when requested)
+    if print_percentiles:
+        percentiles = compute_percentiles(values, labels, [50, 75, 90, 95, 99], interpolate=True)
+        distribution_type = "Cost" if "Cost" in title else "Delay"
+        print(f"\n{distribution_type} Distribution Percentiles:")
+        for p, value in percentiles.items():
+            print(f"  P{p}: {value:,.0f}")
     
     # Save both versions if grayscale requested
     base, ext = os.path.splitext(save_path)
@@ -182,9 +241,9 @@ def plot_cumulative_distributions(cost_matrix: np.ndarray, delay_matrix: np.ndar
     save_path : str, default='png/'
         Directory to save output images
     create_grayscale : bool, default=True
-        Whether to create grayscale versions for PMJ submission
+        Whether to create grayscale versions for journal submission
     dpi : int, default=300
-        Resolution for saved images (300 is PMJ requirement)
+        Resolution for saved images (300 is journal requirement)
     """
     os.makedirs(save_path, exist_ok=True)
     heatmap_cmap = 'coolwarm'  # Original colormap for color versions
@@ -218,7 +277,7 @@ def plot_cumulative_distributions(cost_matrix: np.ndarray, delay_matrix: np.ndar
     num_days_ticks = min(10, cost_matrix.shape[0])
 
     cost_xticks = (np.linspace(0, len(cost_labels) - 1, num_cost_ticks).astype(int),
-                   [f"{int(label)}" for label in np.linspace(min_cost, cost_labels[-1], num_cost_ticks)])
+                   [f"{int(label):,}" for label in np.linspace(min_cost, cost_labels[-1], num_cost_ticks)])
     delay_xticks = (np.linspace(0, len(delay_labels) - 1, num_delay_ticks).astype(int),
                     [f"{int(label)}" for label in np.linspace(min_delay, delay_labels[-1], num_delay_ticks)])
     days_yticks = (np.linspace(0, cost_matrix.shape[0] - 1, num_days_ticks).astype(int),
@@ -240,11 +299,11 @@ def plot_cumulative_distributions(cost_matrix: np.ndarray, delay_matrix: np.ndar
                 "Project Day", "Cumulative Probability", delay_xticks, days_yticks, 0, 
                 f'{save_path}cumulative_delay_probability_distribution.png', heatmap_cmap, False, dpi)
 
-    # Final distribution histograms
+    # Final distribution histograms - print percentiles only for color versions
     plot_final_distribution(cost_labels, cost_matrix[-1, :], "Final Cumulative Cost Distribution", "Cost", 
-                          cost_bin_size, f'{save_path}final_cumulative_cost_distribution.png', False, dpi)
+                          cost_bin_size, f'{save_path}final_cumulative_cost_distribution.png', False, dpi, True)
     plot_final_distribution(delay_labels, delay_matrix[-1, :], "Final Cumulative Delay Distribution", "Delay", 
-                          delay_bin_size, f'{save_path}final_cumulative_delay_distribution.png', False, dpi)
+                          delay_bin_size, f'{save_path}final_cumulative_delay_distribution.png', False, dpi, True)
 
     # Create grayscale versions if requested
     if create_grayscale:
@@ -272,11 +331,11 @@ def plot_cumulative_distributions(cost_matrix: np.ndarray, delay_matrix: np.ndar
                     "Project Day", "Cumulative Probability", delay_xticks, days_yticks, 0, 
                     f'{save_path}cumulative_delay_probability_distribution.png', heatmap_cmap, True, dpi, True)
         
-        # Final distribution histograms - grayscale
+        # Final distribution histograms - grayscale (don't print percentiles again)
         plot_final_distribution(cost_labels, cost_matrix[-1, :], "Final Cumulative Cost Distribution", "Cost", 
-                              cost_bin_size, f'{save_path}final_cumulative_cost_distribution.png', True, dpi)
+                              cost_bin_size, f'{save_path}final_cumulative_cost_distribution.png', True, dpi, False)
         plot_final_distribution(delay_labels, delay_matrix[-1, :], "Final Cumulative Delay Distribution", "Delay", 
-                              delay_bin_size, f'{save_path}final_cumulative_delay_distribution.png', True, dpi)
+                              delay_bin_size, f'{save_path}final_cumulative_delay_distribution.png', True, dpi, False)
 
     print(f"Cost distribution reaches steady state at day: {cost_steady_state}")
     print(f"Delay distribution reaches steady state at day: {delay_steady_state}")
